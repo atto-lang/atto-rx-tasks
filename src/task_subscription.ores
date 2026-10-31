@@ -4,7 +4,7 @@
 // A Task observation creates one observer child, not another producer.
 // The subscription mutable self never escapes into the observer child.
 
-pub define class TaskStreamEvent<T> as
+define pub class TaskStreamEvent<T> as
   val String kind;
   val Option<T> value;
 
@@ -18,7 +18,7 @@ pub define class TaskStreamEvent<T> as
   pub is_cancelled(): bool { return self.kind == "cancelled"; }
 end
 
-pub define class TaskSubscription<T> as
+define pub class TaskSubscription<T> as
   // A moved-from, mutable owner slot is required by the exact ownership checker.
   // This is a single-owner adapter: the compiler has NOT yet proved a
   // second class-field extraction impossible across different call sites.
