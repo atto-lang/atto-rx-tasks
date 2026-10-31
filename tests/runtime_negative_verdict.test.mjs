@@ -3,20 +3,21 @@ import assert from 'node:assert/strict';
 import { verify_runtime_negative } from '../scripts/runtime_negative_verdict.mjs';
 
 const file = 'tests/negative/double_field_take.ores';
-const expected = /^oreslang: .*already moved\b/m;
+const expected = /^oreslang: class field 'TaskCell\\.producer' was already moved\\s*$/m;
+const expectedStdout = 'RX_TASK_FIRST_FIELD_TAKE_COMMITTED\\n';
 const checkOk = { status: 0, stderr: '', stdout: '' };
 
 function probe(check, runtime) {
   const calls = [];
   const outcome = verify_runtime_negative({
-    file, expected,
+    file, expected, expectedStdout,
     invoke: args => { calls.push(args); return calls.length === 1 ? check : runtime; }
   });
   return { calls, outcome };
 }
 
 test('only an admitted fixture with a real matching runtime failure passes', () => {
-  const { calls, outcome } = probe(checkOk, { status: 1, stderr: "oreslang: class field 'TaskCell.producer' was already moved" });
+  const { calls, outcome } = probe(checkOk, { status: 1, stderr: "oreslang: class field 'TaskCell.producer' was already moved", stdout: expectedStdout });
   assert.equal(outcome.state, 'PASS');
   assert.equal(outcome.phase, 'runtime');
   assert.deepEqual(calls, [['--check', file], [file]]);
@@ -86,4 +87,31 @@ test('failed --check cannot produce a runtime receipt even with a matching stdou
   });
   assert.equal(outcome.state, 'NOT_EXECUTED');
   assert.equal(calls.length, 1);
+});
+
+test('runtime matching diagnostic without guest field-move breadcrumb fails', () => {
+  const outcome = probe(checkOk, { status: 1,
+    stderr: "oreslang: class field 'TaskCell.producer' was already moved"
+  }).outcome;
+  assert.equal(outcome.state, 'FAIL');
+});
+
+test('unrelated guest stdout before or after breadcrumb fails closed', () => {
+  for (const stdout of [
+    'untrusted\\n' + expectedStdout,
+    expectedStdout + 'unexpected\\n',
+    'RX_TASK_FIRST_FIELD_TAKE_COMMITTED'
+  ]) {
+    const outcome = probe(checkOk, { status: 1,
+      stdout, stderr: "oreslang: class field 'TaskCell.producer' was already moved"
+    }).outcome;
+    assert.equal(outcome.state, 'FAIL');
+  }
+});
+
+test('different moved field cannot satisfy exact ownership receipt', () => {
+  const outcome = probe(checkOk, { status: 1, stdout: expectedStdout,
+    stderr: "oreslang: class field 'Other.producer' was already moved"
+  }).outcome;
+  assert.equal(outcome.state, 'FAIL');
 });

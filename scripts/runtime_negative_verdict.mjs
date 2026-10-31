@@ -1,7 +1,7 @@
 // Source-free verifier boundary: compiler admission must succeed before
 // observing a runtime-negative guest verdict. Does not execute Oreslang.
-export function verify_runtime_negative({ file, expected, invoke }) {
-  if (typeof file !== 'string' || !file || !(expected instanceof RegExp) ||
+export function verify_runtime_negative({ file, expected, expectedStdout, invoke }) {
+  if (typeof file !== 'string' || !file || !(expected instanceof RegExp) || typeof expectedStdout !== 'string' ||
       typeof invoke !== 'function') {
     throw new TypeError('invalid runtime-negative verifier configuration');
   }
@@ -19,7 +19,11 @@ export function verify_runtime_negative({ file, expected, invoke }) {
   // usage error. Never accept usage errors or an unrelated failure that
   // happens to print the expected phrase to stdout.
   const diagnostic = execution.stderr || '';
-  if (execution.status !== 1 || !expected.test(diagnostic)) {
+  // A guest-side breadcrumb proves actual Oreslang code reached the first
+  // successful field extraction before a second take failed. No extra stdout.
+  const actualStdout = (execution.stdout || '').replace(/\r\n/g, '\n');
+  if (execution.status !== 1 || actualStdout !== expectedStdout ||
+      !expected.test(diagnostic)) {
     return { state: 'FAIL', phase: 'runtime', diagnostic };
   }
   return { state: 'PASS', phase: 'runtime', diagnostic };
