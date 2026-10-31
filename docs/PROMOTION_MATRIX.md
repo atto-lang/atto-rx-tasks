@@ -16,6 +16,10 @@ This tracks [rx-ores #21](https://github.com/ores-truffle-oreslang/rx-ores/issue
 
 **Critical:** The reference protocol in `tests/reference_protocol.test.mjs` is an abstract source-free model, **not** a test of `src/rx.ores`. CI must never report P3–P8 green on the strength of P2.
 
+## Exact-source guest harness preflight
+
+`scripts/test_guest.mjs` refuses execution without `ORES_CLASSPATH`, `ORES_COMPILER_REPO`, `ORES_COMPILER_SHA` and `ORES_COMPILER_TREE_SHA`. It checks the live Git checkout's HEAD/tree and tracked cleanliness before invoking Java. It does **not** attest the classpath binaries, JDK profile, exact compiler build or runtime conformance; those require separately authenticated clean build logs and artifact identities.
+
 ## Dependency order
 
 1. Resolve Task guest-language admission and Task-handle ownership on the exact Java compiler branch in [#1468](https://github.com/ores-truffle-oreslang/oreslang-source.java/pull/1468).
