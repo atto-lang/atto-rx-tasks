@@ -59,7 +59,16 @@ const src = resolve(root, 'src/rx.ores');
 const fixture = resolve(root, 'tests/task_single.ores');
 const oracle = readFileSync(resolve(root, 'tests/task_single.out'), 'utf8').trimEnd();
 
-for (const args of [['--check', src], ['--check', fixture], [fixture]]) {
+const cases = [{ source: src, fixture, oracle }];
+if (process.env.ORES_TEST_STAGE1 === '1') {
+  cases.push({
+    source: resolve(root, 'src/task_subscription.ores'),
+    fixture: resolve(root, 'tests/task_subscription.ores'),
+    oracle: readFileSync(resolve(root, 'tests/task_subscription.out'), 'utf8').trimEnd()
+  });
+}
+for (const suite of cases) {
+  for (const args of [['--check', suite.source], ['--check', suite.fixture], [suite.fixture]]) {
   const result = spawnSync(java, [...prefix, ...args], {
     encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024,
     shell: false
@@ -68,10 +77,11 @@ for (const args of [['--check', src], ['--check', fixture], [fixture]]) {
     console.error('FAIL guest', args, result.error || result.stderr || result.stdout);
     process.exit(1);
   }
-  if (args.length === 1 && (result.stdout || '').trimEnd() !== oracle) {
-    console.error('FAIL guest expected', JSON.stringify(oracle),
+  if (args.length === 1 && (result.stdout || '').trimEnd() !== suite.oracle) {
+    console.error('FAIL guest expected', JSON.stringify(suite.oracle),
       'actual', JSON.stringify((result.stdout || '').trimEnd()));
     process.exit(1);
   }
+  }
 }
-console.log('PASS guest task_single (source checkout verified, compiled-binary identity UNATTESTED)', expectedCommit, expectedTree);
+console.log('PASS guest fixtures (source checkout verified, compiled-binary identity UNATTESTED)', expectedCommit, expectedTree, 'stage1='+String(process.env.ORES_TEST_STAGE1 === '1'));
