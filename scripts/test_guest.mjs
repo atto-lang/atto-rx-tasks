@@ -59,6 +59,32 @@ const src = resolve(root, 'src/rx.ores');
 const fixture = resolve(root, 'tests/task_single.ores');
 const oracle = readFileSync(resolve(root, 'tests/task_single.out'), 'utf8').trimEnd();
 
+// A class-field alias may pass the current static checker; the evaluator
+// must consume the mutable slot before a second method invocation can read it.
+// This is runtime guest evidence only when the exact Task compiler executes it.
+const runtimeNegativeCases = process.env.ORES_TEST_STAGE1 === '1' ? [
+  {
+    filename: 'double_field_take.ores',
+    reason: /already moved/
+  }
+] : [];
+for (const negative of runtimeNegativeCases) {
+  const file = resolve(root, 'tests/negative', negative.filename);
+  const result = spawnSync(java, [...prefix, file], {
+    encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
+  });
+  if (result.error || result.signal || result.status === null) {
+    console.error('FAIL runtime negative guest did not finish',
+      negative.filename, result.error || result.signal);
+    process.exit(1);
+  }
+  const diagnostic = [result.stderr || '', result.stdout || ''].join('\n');
+  if (result.status === 0 || !negative.reason.test(diagnostic)) {
+    console.error('FAIL runtime negative guest', negative.filename,
+      'exit', result.status, 'diagnostic', diagnostic);
+    process.exit(1);
+  }
+}
 const cases = [{ source: src, fixture, oracle }];
 if (process.env.ORES_TEST_STAGE1 === '1') {
   cases.push({

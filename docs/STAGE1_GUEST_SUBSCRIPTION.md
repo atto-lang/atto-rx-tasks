@@ -72,3 +72,20 @@ nonzero `--check` exit AND the expected diagnostic regex. These
 fixtures complement the real JUnit tests proposed in
 https://github.com/ores-truffle-oreslang/oreslang-source.java/pull/2375,
 but are not executable evidence until the exact Task compiler runs.
+
+
+## Runtime double-field-take regression (Java Task draft #2375)
+
+`tests/negative/double_field_take.ores` must compile or pass through
+guest execution and **fail at runtime** with `already moved`. This
+detects the distinction between compiler-local affine Task tracking
+and the backing class-field store: simply returning the same host Task
+handle twice was previously possible because `rt take` was an
+identity-level operation. The Java Task evaluator draft now proposes
+a moved-slot sentinel in BOTH synchronous and suspendable evaluation,
+with atomic class-field consumption and reads rejecting the marker.
+
+The runner tests this only with the exact Task-enabled compiler and
+`ORES_TEST_STAGE1=1`. This is an **authored oracle**, not a runtime
+receipt. The Java production patch and its regression test remain
+unexecuted while Actions runner admission is blocked.

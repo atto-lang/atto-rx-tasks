@@ -44,3 +44,13 @@ test('stage-1 fixture is gated and possesses an exact expected-output oracle', (
   assert.equal(readFileSync(resolve(root, 'tests/task_subscription.out'), 'utf8'),
     'true\n42\ntrue\nfalse\ntrue\nfalse\ntrue\n');
 });
+
+test('stage-1 runner includes a runtime-negative oracle for double Task field extraction', () => {
+  const runner = readFileSync(resolve(root, 'scripts/test_guest.mjs'), 'utf8');
+  const bad = readFileSync(resolve(root, 'tests/negative/double_field_take.ores'), 'utf8');
+  assert.match(runner, /filename: 'double_field_take.ores'/);
+  assert.match(runner, /reason: \/already moved\//);
+  assert.match(runner, /result.status === 0/);
+  assert.equal((bad.match(/holder\.take_task\(\)/g) || []).length, 2);
+  assert.match(bad, /rt take self\.producer/);
+});

@@ -1,0 +1,24 @@
+// Runtime-negative test: a class-held affine Task must be moved at most once.
+// The Task compiler may accept two calls to the same method; the runtime MUST
+// reject the second call rather than publish a second alias to the Task.
+define class TaskCell as
+  let Task<int> producer;
+
+  constructor(Task<int> producer) {
+    self.producer = rt take producer;
+  }
+
+  pub take_task(mut self)(): Task<int> {
+    return rt take self.producer;
+  }
+end
+
+pub routine main(): void {
+  let Task<int> producer = task { return 42; };
+  let TaskCell holder = new TaskCell(rt take producer);
+  let Task<int> once = holder.take_task();
+  let Task<int> twice = holder.take_task();
+  stdio.stdout.write(await once);
+  stdio.stdout.write(await twice);
+  return;
+}
