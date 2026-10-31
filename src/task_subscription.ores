@@ -19,7 +19,10 @@ pub define class TaskStreamEvent<T> as
 end
 
 pub define class TaskSubscription<T> as
-  val Task<T> producer;
+  // A moved-from, mutable owner slot is required by the exact ownership checker.
+  // This is a single-owner adapter: the compiler has NOT yet proved a
+  // second class-field extraction impossible across different call sites.
+  let Task<T> producer;
   let bool demand_claimed = false;
   let bool cancelled = false;
 

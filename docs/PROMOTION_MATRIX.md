@@ -19,8 +19,8 @@ This tracks [rx-ores #21](https://github.com/ores-truffle-oreslang/rx-ores/issue
 ## Stage-1 source candidate (NOT_EXECUTED)
 
 - Separate `src/task_subscription.ores` defines `TaskStreamEvent<T>` and one-demand `TaskSubscription<T>`; neither replaces stable `src/rx.ores`.
-- `next_task(): Option<Task<TaskStreamEvent<T>>>` moves an already-started producer into exactly one Task observer. It refuses duplicate demand. This is not yet the final full Task<StreamEvent<T,E>> API.
-- Cancel can win only before a demand. In-flight cancellation, COMPLETE/FAILED emissions, safe TaskScope get_done and multi-carrier ownership remain **unimplemented**.
+- `next_task(): Option<Task<TaskStreamEvent<T>>>` moves an already-started producer from a mutable `let` class slot into exactly one Task observer; the class-field `val` form is statically rejected by the upstream OwnershipChecker. It refuses duplicate demand. This is not yet the final full Task<StreamEvent<T,E>> API.
+- Cancel can win only before a demand. In-flight cancellation, COMPLETE/FAILED emissions, safe TaskScope get_done and multi-carrier ownership/second class-field transfer proof remain **unimplemented**.
 - Explicitly set `ORES_TEST_STAGE1=1` in the authenticated guest runner to check and execute `tests/task_subscription.ores`, comparing `tests/task_subscription.out`. Without that flag the additional source is not compiled or run.
 - Local Node 22.16.0: `node --check scripts/test_guest.mjs` and `node --test tests/*.test.mjs` completed with **16/16 PASS, zero skips**, for model/preflight/static checks only. Exact Git blob identities verified against local executed copies.
 - First latest new-head GitHub run `41225580809` job `124608921835` returned 0 steps: **NOT_EXECUTED**, runner admission still blocked; root cause not established.

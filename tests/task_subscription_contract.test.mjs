@@ -11,6 +11,8 @@ const code = source.replace(/\/\/[^\n]*/g, '');
 
 test('stage-1 source keeps native Task substrate without Channel/Future adapters', () => {
   assert.match(code, /TaskSubscription<T>/);
+  assert.match(code, /let Task<T> producer;/);
+  assert.doesNotMatch(code, /val Task<T> producer;/);
   assert.match(code, /next_task\(mut self\)\(\): Option<Task<TaskStreamEvent<T>>>/);
   assert.doesNotMatch(code, /\bChannel\s*</);
   assert.doesNotMatch(code, /\bFuture\s*</);

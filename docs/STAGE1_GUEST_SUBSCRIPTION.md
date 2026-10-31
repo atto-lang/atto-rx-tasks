@@ -38,3 +38,20 @@ Admission:
   TaskScope physical retirement before expanding RX operators.
 
 Tracked by https://github.com/ores-truffle-oreslang/rx-ores-tasks/issues/2
+
+
+## Concrete compiler-admission correction (2026-10-31)
+
+The Task compiler branch's `OwnershipChecker` explicitly checks
+`rt take` from `Ast.MemberExpr` and rejects any class field whose
+`bindingKind` is not `LET`. The original `val Task<T> producer` field
+therefore made this source's `rt take self.producer` impossible.
+It is now `let Task<T> producer`, with no implicit copy.
+
+This is **necessary but not sufficient**: extracting a class-field
+owner twice is not statically prevented merely by field mutability.
+Only a unique, non-aliased subscription receiver and its serialized
+`demand_claimed` state prevent a second transfer in this experimental
+source. The exact native checker and negative tests still need
+execution; a production implementation must use compiler-backed affine
+field state or an authenticated single-claim runtime handle.
