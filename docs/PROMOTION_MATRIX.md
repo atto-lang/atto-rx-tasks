@@ -6,15 +6,25 @@ This tracks [rx-ores #21](https://github.com/ores-truffle-oreslang/rx-ores/issue
 | --- | --- | --- |
 | P0 repository provisioned | private dedicated repo under ores-truffle-oreslang | DONE |
 | P1 immutable source provenance | same Git blob SHAs as rx-ores draft #22 for source, fixture, oracle, runner and contract | staged; verify on review |
-| P2 source-free reference model | actual nonzero-step Node test run, deterministic terminal + demand + retirement traces | PENDING CI |
-| P3 Oreslang compiler syntax | exact Task-enabled compiler commit/tree + `--check` on Task guest | NOT_EXECUTED |
+| P2 source-free reference model | exact-head nonzero-step Node run and event/demand/retirement traces | 16/16 local source-free tests passed; GitHub CI still NOT_EXECUTED |
+| P3 Oreslang compiler syntax | exact Task-enabled compiler commit/tree + `--check` on both guests, stage-1 explicitly enabled | Stage-1 .ores source and fixture authored; NOT_EXECUTED |
 | P4 Oreslang guest runtime | exact Task compiler binaries; smoke fixture golden stdout, negative ownership and error oracles | NOT_EXECUTED |
 | P5 cancellation/ownership | concurrent pull rejection, cancellation waiter detachment, affine producer result claims, actor-domain/Send/Sync checks | NOT_IMPLEMENTED |
 | P6 structured physical retirement | TaskScope child lineage and actual physical `get_done` before actor arena/borrow release | NOT_IMPLEMENTED |
 | P7 cross-backend | independent executed Java, LLVM, .NET, Wasm and Forge parity receipts | NOT_EXECUTED |
 | P8 native profiles | GraalVM Native Image, LLVM AOT/sanitizers and other applicable targets | NOT_EXECUTED |
 
-**Critical:** The reference protocol in `tests/reference_protocol.test.mjs` is an abstract source-free model, **not** a test of `src/rx.ores`. CI must never report P3–P8 green on the strength of P2.
+**Critical:** The abstract reference tests do not execute either Oreslang source unit. The newly added source-only inspection tests verify superficial admission patterns, not compiler lowering or scheduler execution. CI must never report P3–P8 green on the strength of P2.
+
+## Stage-1 source candidate (NOT_EXECUTED)
+
+- Separate `src/task_subscription.ores` defines `TaskStreamEvent<T>` and one-demand `TaskSubscription<T>`; neither replaces stable `src/rx.ores`.
+- `next_task(): Option<Task<TaskStreamEvent<T>>>` moves an already-started producer into exactly one Task observer. It refuses duplicate demand. This is not yet the final full Task<StreamEvent<T,E>> API.
+- Cancel can win only before a demand. In-flight cancellation, COMPLETE/FAILED emissions, safe TaskScope get_done and multi-carrier ownership remain **unimplemented**.
+- Explicitly set `ORES_TEST_STAGE1=1` in the authenticated guest runner to check and execute `tests/task_subscription.ores`, comparing `tests/task_subscription.out`. Without that flag the additional source is not compiled or run.
+- Local Node 22.16.0: `node --check scripts/test_guest.mjs` and `node --test tests/*.test.mjs` completed with **16/16 PASS, zero skips**, for model/preflight/static checks only. Exact Git blob identities verified against local executed copies.
+- First latest new-head GitHub run `41225580809` job `124608921835` returned 0 steps: **NOT_EXECUTED**, runner admission still blocked; root cause not established.
+
 
 ## Exact-source guest harness preflight
 
