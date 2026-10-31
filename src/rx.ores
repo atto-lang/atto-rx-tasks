@@ -11,7 +11,7 @@
 // Stage 0 is a serialized, single-owner, one-shot Task projection, NOT
 // thread-safe Rx hot multicast and NOT an implicitly owned producer.
 
-pub define class TaskObservable<T> as
+define pub class TaskObservable<T> as
   val Task<T> producer;
   let bool demand_claimed = false;
   let bool cancelled = false;
