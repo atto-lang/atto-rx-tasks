@@ -24,7 +24,7 @@ test('stage-1 source moves the producer into exactly one child after a demand cl
   assert.match(code, /await one_producer;/);
   const childBody = code.match(/val Task<TaskStreamEvent<T>> child = task \{([\s\S]*?)\n    \};/)?.[1];
   assert.ok(childBody, 'must have an admitted observer Task body');
-  assert.doesNotMatch(childBody, /\\bself\\./);
+  assert.doesNotMatch(childBody, /\bself\./);
 });
 
 test('stage-1 cancellation refuses post-demand claims and never revokes external producer', () => {
