@@ -53,7 +53,11 @@ test('stage-1 runner includes a runtime-negative oracle for double Task field ex
   assert.match(runner, /'--check', file/);
   assert.match(runner, /compiled.status !== 0/);
   assert.match(runner, /NOT_EXECUTED runtime-negative guest rejected before execution/);
-  assert.match(runner, /result.status === 0/);
+  assert.match(runner, /verify_runtime_negative/);
+  assert.match(runner, /outcome.state !== 'PASS'/);
+  const gate = readFileSync(resolve(root, 'scripts/runtime_negative_verdict.mjs'), 'utf8');
+  assert.match(gate, /check.status !== 0/);
+  assert.match(gate, /execution.status === 0/);
   assert.equal((bad.match(/holder\.take_task\(\)/g) || []).length, 2);
   assert.match(bad, /rt take self\.producer/);
 });
