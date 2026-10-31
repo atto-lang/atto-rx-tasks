@@ -22,7 +22,7 @@ test('stage-1 source moves the producer into exactly one child after a demand cl
   assert.equal((code.match(/rt take self\.producer/g) || []).length, 1);
   assert.equal((code.match(/= task \{/g) || []).length, 1);
   assert.match(code, /await one_producer;/);
-  const childBody = code.match(/val Task<TaskStreamEvent<T>> child = task \\{([\\s\\S]*?)\\n    \\};/)?.[1];
+  const childBody = code.match(/val Task<TaskStreamEvent<T>> child = task \{([\s\S]*?)\n    \};/)?.[1];
   assert.ok(childBody, 'must have an admitted observer Task body');
   assert.doesNotMatch(childBody, /\\bself\\./);
 });
