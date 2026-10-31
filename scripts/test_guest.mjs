@@ -70,6 +70,20 @@ const runtimeNegativeCases = process.env.ORES_TEST_STAGE1 === '1' ? [
 ] : [];
 for (const negative of runtimeNegativeCases) {
   const file = resolve(root, 'tests/negative', negative.filename);
+  // Strict two-phase verdict: the compiler must ADMIT this exact source
+  // before a runtime failure can count as a moved-field regression pass.
+  // A compiler diagnostic that happens to say "already moved" is NOT a
+  // runtime execution receipt.
+  const compiled = spawnSync(java, [...prefix, '--check', file], {
+    encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
+  });
+  if (compiled.error || compiled.signal || compiled.status !== 0 ||
+      /: error:/.test(compiled.stderr || '')) {
+    console.error('NOT_EXECUTED runtime-negative guest rejected before execution',
+      negative.filename, compiled.error || compiled.signal ||
+      compiled.stderr || compiled.stdout);
+    process.exit(1);
+  }
   const result = spawnSync(java, [...prefix, file], {
     encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
   });

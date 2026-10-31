@@ -89,3 +89,18 @@ The runner tests this only with the exact Task-enabled compiler and
 `ORES_TEST_STAGE1=1`. This is an **authored oracle**, not a runtime
 receipt. The Java production patch and its regression test remain
 unexecuted while Actions runner admission is blocked.
+
+## Exact verifier hardening following merge
+
+The experimental source was merged to main before native Task guest acceptance
+was established. Merging did not constitute compiler or runtime proof.
+This follow-up stays in a separate draft PR.
+
+The runtime-negative oracle now has a mandatory **two-stage** verdict:
+1. `--check tests/negative/double_field_take.ores` must SUCCEED.
+2. The same fixture is then executed; only runtime failure with
+   `already moved` is a regression PASS.
+
+Previously, a compiler failure with the matching text could accidentally
+be mistaken for an executed runtime ownership check. The gate now fails
+closed with `NOT_EXECUTED` when compiler admission fails.

@@ -50,6 +50,9 @@ test('stage-1 runner includes a runtime-negative oracle for double Task field ex
   const bad = readFileSync(resolve(root, 'tests/negative/double_field_take.ores'), 'utf8');
   assert.match(runner, /filename: 'double_field_take.ores'/);
   assert.match(runner, /reason: \/already moved\//);
+  assert.match(runner, /'--check', file/);
+  assert.match(runner, /compiled.status !== 0/);
+  assert.match(runner, /NOT_EXECUTED runtime-negative guest rejected before execution/);
   assert.match(runner, /result.status === 0/);
   assert.equal((bad.match(/holder\.take_task\(\)/g) || []).length, 2);
   assert.match(bad, /rt take self\.producer/);
