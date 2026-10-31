@@ -136,3 +136,36 @@ remains blocked. Historical alternate-org stepful successes do not
 guarantee today's private Actions minutes. The exact RX and Java
 source workflows have recorded zero executed steps and must remain
 `NOT_EXECUTED`.
+
+
+## Runtime-negative verifier v2: exact guest-phase evidence (2026-10-31)
+
+The new source-free helper and `.ores` fixture require:
+- Successful `--check` on the negative fixture before launching it.
+- One guest line printed immediately **after** the first class-field
+  `rt take`: `RX_TASK_FIRST_FIELD_TAKE_COMMITTED`.
+- Runtime exit **1**, not CLI usage exit 2 or guest success exit 0.
+- An exact `oreslang: class field 'TaskCell.producer' was already moved`
+  stderr diagnostic, not an arbitrary matching string or stdout spoof.
+- No additional stdout, no signalled/failed child process, no cross-file
+  ownership error accepted as a valid target.
+
+The first copy of this change overescaped the regex and expected newline.
+That was corrected **before acceptance**. The following **exact committed
+bytes were materialized, hashed independently with local `git hash-object`,
+and actually executed with Node 22.16.0**:
+
+- `scripts/runtime_negative_verdict.mjs`: `d9f02f7a77a750b958659bbb164f5395cd47ed7e`
+- `tests/runtime_negative_verdict.test.mjs`: `99162a1ddc2f1cd43fdeca9e42f0f8f47187ce4d`
+
+Result: **14 tests / 14 PASS / 0 FAIL / 0 SKIPPED** for the
+source-free verifier (not the compiler, not the `.ores` runtime).
+`tests/task_subscription_contract.test.mjs` was updated to remove
+obsolete assertions against the replaced verifier implementation;
+its standalone execution is not independently verified in this note.
+
+The latest source org RX PR #4 CI run `41235872724`, job
+`124639422540`, failed with **zero executed steps**. The focused
+Java compiler PR #2375 and RX PR #4 remain draft. Java source `main`
+remains `protected: false`, and its cross-org private CI allowlist
+is empty, so no private compiler tree was exported to a carrier.
