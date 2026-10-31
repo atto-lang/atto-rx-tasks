@@ -9,7 +9,7 @@
 3. Precisely one terminal kind (COMPLETE, FAILED, CANCELLED) wins. A terminal winner releases pending observer registration once, but an **independent producer's** cancellation authority is never transferred to the observer.
 4. A Task owner can request cancellation once; the request, the terminal result, and physical post-carrier retirement remain different events.
 5. Reclamation requires terminal claim, physical observer retirement, all owned children retired, and—only when the adapter owns the producer—physical producer retirement. A cleanup failure poisons reclamation.
-6. Invalid owner or generation must never admit child scheduling or demand. Actual runtime must mint unforgeable capabilities, unlike the abstract model's test-only string fields.
+6. Invalid owner or generation must never admit child scheduling or demand. Actual runtime must mint opaque identity capabilities; the model tests object identity rejection for forged lookalikes, but still does not authenticate runtime actor identities.
 7. All Task callbacks execute on the owning scheduler, not under producer/JNI/IO completion threads or actor locks. There must be zero hidden prefetch and bounded pending callbacks.
 8. Model invariants must be independently enforced by Oreslang tests and exact compiler/runtime receipts before promotion. The reference test checks logic only, not thread-safety, memory fences, runtime ownership enforcement, or five-backend parity.
 

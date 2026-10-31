@@ -6,9 +6,10 @@ import assert from 'node:assert/strict';
 const TERMINALS = ['complete', 'failed', 'cancelled'];
 
 class TaskRxReference {
-  constructor({ owner = 'subscriber', producerOwned = false } = {}) {
+  constructor({ owner = 'subscriber', producerOwned = false, producerPermit = null } = {}) {
     this.owner = owner;
     this.producerOwned = producerOwned;
+    this.producerPermit = producerPermit;
     this.terminal = null;
     this.terminalPublications = 0;
     this.generation = 1;
@@ -16,6 +17,7 @@ class TaskRxReference {
     this.nextTicket = 1;
     this.values = [];
     this.subscriberClaimed = false;
+    this.subscriberAuthority = null;
     this.detachCount = 0;
     this.producerCancelCount = 0;
     this.children = new Set();
@@ -30,10 +32,12 @@ class TaskRxReference {
     if (owner !== this.owner || generation !== this.generation) return null;
     if (this.subscriberClaimed) return null; // affine/hot one-consumer source
     this.subscriberClaimed = true;
-    return { owner, generation };
+    this.subscriberAuthority = Object.freeze({ owner, generation });
+    return this.subscriberAuthority;
   }
   authorized(capability) {
     return !!capability && this.subscriberClaimed &&
+      capability === this.subscriberAuthority &&
       capability.owner === this.owner && capability.generation === this.generation;
   }
   demand(capability) {
@@ -61,8 +65,8 @@ class TaskRxReference {
   cancel() {
     return this.settle('cancelled'); // observer detaches only, never producer.cancel
   }
-  ownerCancelProducer({ owner = null } = {}) {
-    if (!this.producerOwned || owner !== this.owner) return false;
+  ownerCancelProducer(permit) {
+    if (!this.producerOwned || permit == null || permit !== this.producerPermit) return false;
     if (this.producerCancelCount) return false;
     this.producerCancelCount++;
     return true; // cancellation REQUEST, not physical retirement
@@ -109,6 +113,7 @@ test('reject foreign owner and stale generation before child or demand admission
   assert.equal(s.subscribe({ generation: 0 }), null);
   const c = s.subscribe();
   assert.equal(s.demand({ owner: 'actor-B', generation: 1 }), null);
+  assert.equal(s.demand({ owner: 'actor-A', generation: 1 }), null); // forged matching fields
   assert.equal(s.childStart({ owner: 'actor-A', generation: 0 }), null);
   assert.ok(s.demand(c));
 });
@@ -152,13 +157,15 @@ test('terminal before demand prevents Task admission and leaves no registrations
 });
 
 test('cancel request for owned producer is separate authority and does not reclaim its memory', () => {
-  const s = new TaskRxReference({ owner: 'a', producerOwned: true });
+  const ownerPermit = Object.freeze({ kind: 'owner-task-cancel' });
+  const s = new TaskRxReference({ owner: 'a', producerOwned: true, producerPermit: ownerPermit });
   const c = s.subscribe();
   const child = s.childStart(c);
   s.cancel();
   assert.equal(s.ownerCancelProducer({ owner: 'b' }), false);
-  assert.equal(s.ownerCancelProducer({ owner: 'a' }), true);
-  assert.equal(s.ownerCancelProducer({ owner: 'a' }), false);
+  assert.equal(s.ownerCancelProducer({ owner: 'a' }), false); // forged matching fields
+  assert.equal(s.ownerCancelProducer(ownerPermit), true);
+  assert.equal(s.ownerCancelProducer(ownerPermit), false);
   s.logicalCompletion();
   assert.equal(s.canReleaseRegion(), false);
   s.observerExit();
