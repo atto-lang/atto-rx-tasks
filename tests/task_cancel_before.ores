@@ -1,0 +1,15 @@
+import * as rx_tasks from '../src/rx.ores';
+import class TaskObservable from '../src/rx.ores';
+
+// Candidate guest test, NOT verified against an exact Task-enabled compiler.
+// An external Task is not owned by the observer; pre-demand cancellation must
+// make the observation inert without claiming Task physical retirement.
+pub async fnc main(): void {
+  val Task<int> external = task { return 13; };
+  let TaskObservable<int> source = rx_tasks.from_task(external);
+  stdio.println(source.cancel());
+  stdio.println(source.cancel());
+  stdio.println(source.is_cancelled());
+  stdio.println(source.next().is_none());
+  return;
+}
