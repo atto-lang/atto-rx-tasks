@@ -55,3 +55,20 @@ Only a unique, non-aliased subscription receiver and its serialized
 source. The exact native checker and negative tests still need
 execution; a production implementation must use compiler-backed affine
 field state or an authenticated single-claim runtime handle.
+
+
+## Exact compiler negative guest fixtures
+
+`tests/negative/immutable_task_field.ores` must reject with
+`immutable/final class field`. A generic parser error is NOT a valid
+pass.
+
+`tests/negative/double_move_task.ores` must reject with a
+move/ownership-specific diagnostic, not a missing module or task
+syntax error.
+
+Both are enabled by `ORES_TEST_STAGE1=1`; the runner requires a
+nonzero `--check` exit AND the expected diagnostic regex. These
+fixtures complement the real JUnit tests proposed in
+https://github.com/ores-truffle-oreslang/oreslang-source.java/pull/2375,
+but are not executable evidence until the exact Task compiler runs.

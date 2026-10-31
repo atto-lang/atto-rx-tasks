@@ -67,6 +67,34 @@ if (process.env.ORES_TEST_STAGE1 === '1') {
     oracle: readFileSync(resolve(root, 'tests/task_subscription.out'), 'utf8').trimEnd()
   });
 }
+// Negative tests run only on the explicit stage-1 Task-enabled compiler path.
+const negativeCases = process.env.ORES_TEST_STAGE1 === '1' ? [
+  {
+    filename: 'immutable_task_field.ores',
+    reason: /immutable\/final class field/
+  },
+  {
+    filename: 'double_move_task.ores',
+    reason: /moved|consumed|use after|already taken|ownership/i
+  }
+] : [];
+for (const negative of negativeCases) {
+  const file = resolve(root, 'tests/negative', negative.filename);
+  const result = spawnSync(java, [...prefix, '--check', file], {
+    encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
+  });
+  if (result.error || result.signal || result.status === null) {
+    console.error('FAIL negative guest could not complete check', negative.filename,
+      result.error || result.signal);
+    process.exit(1);
+  }
+  const diagnostic = [result.stderr || '', result.stdout || ''].join('\n');
+  if (result.status === 0 || !negative.reason.test(diagnostic)) {
+    console.error('FAIL negative guest admission', negative.filename,
+      'exit', result.status, 'diagnostic', diagnostic);
+    process.exit(1);
+  }
+}
 for (const suite of cases) {
   for (const args of [['--check', suite.source], ['--check', suite.fixture], [suite.fixture]]) {
   const result = spawnSync(java, [...prefix, ...args], {
