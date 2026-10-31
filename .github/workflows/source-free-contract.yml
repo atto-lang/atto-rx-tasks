@@ -18,4 +18,4 @@ jobs:
       - name: Syntax-check guest runner
         run: node --check scripts/test_guest.mjs
       - name: Execute source-free reference protocol tests (NOT guest Oreslang execution)
-        run: node --test tests/reference_protocol.test.mjs
+        run: node --test tests/*.test.mjs
