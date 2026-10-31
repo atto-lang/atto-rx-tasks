@@ -1,0 +1,23 @@
+import * as rx_tasks from '../src/task_subscription.ores';
+import class TaskSubscription, TaskStreamEvent from '../src/task_subscription.ores';
+
+// Experimental Task-enabled compiler fixture, not stable CI.
+pub routine main(): void {
+  let Task<int> producer = task { return 42; };
+  let TaskSubscription<int> sub = rx_tasks.from_task(rt take producer);
+
+  val Option<Task<TaskStreamEvent<int>>> admitted = sub.next_task();
+  val Task<TaskStreamEvent<int>> observer = admitted.unwrap();
+  val TaskStreamEvent<int> value = await observer;
+  stdio.println(value.is_next());
+  stdio.println(value.value.unwrap());
+  stdio.println(sub.next_task().is_none());
+  stdio.println(sub.cancel());
+
+  let Task<int> independent = task { return 99; };
+  let TaskSubscription<int> skipped = rx_tasks.from_task(rt take independent);
+  stdio.println(skipped.cancel());
+  stdio.println(skipped.cancel());
+  stdio.println(skipped.next_task().is_none());
+  return;
+}

@@ -1,0 +1,21 @@
+name: Task RX source-free contract model
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  contract-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Show preinstalled Node.js
+        run: node --version
+      - name: Syntax-check guest runner
+        run: node --check scripts/test_guest.mjs
+      - name: Execute source-free reference protocol tests (NOT guest Oreslang execution)
+        run: node --test tests/*.test.mjs

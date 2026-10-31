@@ -1,0 +1,16 @@
+// A class field declared val is not eligible for rt take.
+define class TaskCell as
+  val Task<int> producer;
+
+  constructor(Task<int> producer) {
+    self.producer = rt take producer;
+  }
+
+  pub take_task(mut self)(): Task<int> {
+    return rt take self.producer;
+  }
+end
+
+pub routine main(): void {
+  return;
+}

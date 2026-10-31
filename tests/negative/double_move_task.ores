@@ -1,0 +1,19 @@
+// The same affine Task local must not be transferred to two subscribers.
+define class TaskCell as
+  let Task<int> producer;
+
+  constructor(Task<int> producer) {
+    self.producer = rt take producer;
+  }
+
+  pub take_task(mut self)(): Task<int> {
+    return rt take self.producer;
+  }
+end
+
+pub routine main(): void {
+  let Task<int> producer = task { return 42; };
+  let TaskCell first = new TaskCell(rt take producer);
+  let TaskCell second = new TaskCell(rt take producer);
+  return;
+}
