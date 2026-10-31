@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { verify_runtime_negative } from '../scripts/runtime_negative_verdict.mjs';
 
 const file = 'tests/negative/double_field_take.ores';
-const expected = /^oreslang: class field 'TaskCell\\.producer' was already moved\\s*$/m;
-const expectedStdout = 'RX_TASK_FIRST_FIELD_TAKE_COMMITTED\\n';
+const expected = /^oreslang: class field 'TaskCell\.producer' was already moved\s*$/m;
+const expectedStdout = 'RX_TASK_FIRST_FIELD_TAKE_COMMITTED\n';
 const checkOk = { status: 0, stderr: '', stdout: '' };
 
 function probe(check, runtime) {
