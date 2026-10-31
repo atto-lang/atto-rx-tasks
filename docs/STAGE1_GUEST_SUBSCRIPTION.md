@@ -104,3 +104,35 @@ The runtime-negative oracle now has a mandatory **two-stage** verdict:
 Previously, a compiler failure with the matching text could accidentally
 be mistaken for an executed runtime ownership check. The gate now fails
 closed with `NOT_EXECUTED` when compiler admission fails.
+
+
+## Strict negative-guest receipt and local verification (2026-10-31)
+
+The `double_field_take.ores` runtime-negative oracle now requires:
+
+1. Exact compiler `--check` returns zero and emits no `: error:` diagnostic.
+2. A separate guest launch actually completes without process/signal/spawn failure.
+3. The guest launcher returns **exit 1** (runtime failure), never exit 0
+   or exit 2 (CLI-usage failure).
+4. **stderr** (not stdout) contains an `oreslang: ... already moved`
+   diagnostic. The typed source/lineage preflight still runs before this.
+5. Nonzero usage exits, stdout spoofing, unrelated stderr and failures
+   before execution must all fail closed.
+
+This is a **test-verifier acceptance contract**, not a proof that the
+Oreslang runtime has executed. Eleven source-free Node unit tests were
+actually executed locally using Node.js 22.16.0, **11 PASS / 0 FAIL**.
+The exact locally tested `scripts/runtime_negative_verdict.mjs` blob
+SHA is `a77f9e72e78dc3371ac0092ca7f91f46882872a5`; the
+`tests/runtime_negative_verdict.test.mjs` blob SHA is
+`f70ad26ebc5867780a143eb2e8539a82b267a721`.
+Both local `git hash-object` results matched these committed blob IDs.
+
+The Java compiler source policy requires a protected source `main`
+**and** an independently reviewed exact numeric private-carrier
+allowlist entry. On this audit, `main protected:false` and no carrier
+is approved. Consequently cross-organization private-source mirroring
+remains blocked. Historical alternate-org stepful successes do not
+guarantee today's private Actions minutes. The exact RX and Java
+source workflows have recorded zero executed steps and must remain
+`NOT_EXECUTED`.
