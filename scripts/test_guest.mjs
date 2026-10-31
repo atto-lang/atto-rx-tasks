@@ -66,7 +66,7 @@ const oracle = readFileSync(resolve(root, 'tests/task_single.out'), 'utf8').trim
 const runtimeNegativeCases = process.env.ORES_TEST_STAGE1 === '1' ? [
   {
     filename: 'double_field_take.ores',
-    reason: /already moved/
+    reason: /^oreslang: .*already moved\b/m
   }
 ] : [];
 for (const negative of runtimeNegativeCases) {

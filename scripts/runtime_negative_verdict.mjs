@@ -15,8 +15,12 @@ export function verify_runtime_negative({ file, expected, invoke }) {
       execution.status === undefined) {
     return { state: 'NOT_EXECUTED', phase: 'runtime', diagnostic: execution?.stderr || '' };
   }
-  const diagnostic = [execution.stderr || '', execution.stdout || ''].join('\n');
-  if (execution.status === 0) return { state: 'FAIL', phase: 'runtime', diagnostic };
-  if (!expected.test(diagnostic)) return { state: 'FAIL', phase: 'runtime', diagnostic };
+  // OresMain exits 1 for an actual guest/runtime error and 2 for a CLI
+  // usage error. Never accept usage errors or an unrelated failure that
+  // happens to print the expected phrase to stdout.
+  const diagnostic = execution.stderr || '';
+  if (execution.status !== 1 || !expected.test(diagnostic)) {
+    return { state: 'FAIL', phase: 'runtime', diagnostic };
+  }
   return { state: 'PASS', phase: 'runtime', diagnostic };
 }
