@@ -1,0 +1,63 @@
+// rx-ores-tasks incubator: NARROW GUEST TASK SOURCE, NOT PRODUCTION-READY.
+//
+// This source intentionally does NOT import rx-ores, rx-oreslang-channels,
+// or rx-ores-callbacks. It cannot be imported through the stable RX API.
+//
+// Target compiler: Java Task<T> feature branch #1468 plus required structured
+// lifetime/cancellation work. Current rx-ores/compiler.lock is NOT asserted
+// to support this source. Await/Task-handle movement and suspended self access
+// need real source compiler proof before this may graduate.
+//
+// Stage 0 is a serialized, single-owner, one-shot Task projection, NOT
+// thread-safe Rx hot multicast and NOT an implicitly owned producer.
+
+pub define class TaskObservable<T> as
+  val Task<T> producer;
+  let bool demand_claimed = false;
+  let bool cancelled = false;
+  let bool finished = false;
+
+  constructor(Task<T> producer) {
+    self.producer = producer;
+  }
+
+  // Accept at most one demand. This reads an already-started producer and
+  // must not create a second Task or implicitly cancel the producer.
+  // The owning guest task must serialize calls until TaskScope/atomic
+  // subscription admission exists in the compiler/runtime.
+  pub next(mut self)(): Option<T> {
+    if self.cancelled || self.finished || self.demand_claimed; then
+      return None;
+    fi
+    self.demand_claimed = true;
+    val T value = await self.producer;
+    if self.cancelled; then
+      return None;
+    fi
+    self.finished = true;
+    return Some(value);
+  }
+
+  // Mark local cancellation even while await is in flight. The suspended
+  // observer still requires runtime-safe waiter detachment (P0). Never
+  // invoke producer.cancel() or assume physical quiescence.
+  // Physical Task retirement is NOT implied by a successful cancel().
+  pub cancel(mut self)(): bool {
+    if self.cancelled || self.finished; then
+      return false;
+    fi
+    self.cancelled = true;
+    return true;
+  }
+
+  pub is_cancelled(): bool {
+    return self.cancelled;
+  }
+end
+
+// The caller transfers the source Task handle to this single-owner adapter.
+// Native cross-domain transfer, affine result extraction, and simultaneous
+// cancellation are NOT yet admitted; see README and rx-ores issue #21.
+pub fnc from_task<T>(Task<T> producer): TaskObservable<T> {
+  return new TaskObservable<T>(producer);
+}
