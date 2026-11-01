@@ -19,6 +19,10 @@ This implementation is intentionally independent of:
 - Preserve Send/Sync and affine ownership across Tasks and actor boundaries.
 - Verify exact guest-language compiler/runtime execution separately from source-only models and workflow-runner admission.
 
+## Six-toolchain Task RX portability gate
+
+The target is **Java/GraalVM, LLVM, WASM, Cranelift, .NET Native AOT, and independent Forge**. None is currently certified for native Task RX guest execution. See [the audited per-backend contract and exact-source verification sequence](docs/BACKEND_TASK_RX_PORTABILITY.md) and the source-free receipt/schema checks at `contracts/task-rx/v1/manifest.json` and `tests/backend_parity_gate.test.mjs`. Cranelift does **not** share Forge's runtime. A passing Node model or a structurally valid self-asserted CI receipt is **not** executable RX parity.
+
 ## Origin and tracking
 
 - Initial experimental source: [rx-ores PR #22](https://github.com/ores-truffle-oreslang/rx-ores/pull/22), in `incubator/rx-ores-tasks/`.
