@@ -17,6 +17,7 @@ pub routine main(): void {
   let Task<int> producer = task { return 42; };
   let TaskCell holder = new TaskCell(rt take producer);
   let Task<int> once = holder.take_task();
+  stdio.println("RX_TASK_FIRST_FIELD_TAKE_COMMITTED");
   let Task<int> twice = holder.take_task();
   stdio.stdout.write(await once);
   stdio.stdout.write(await twice);

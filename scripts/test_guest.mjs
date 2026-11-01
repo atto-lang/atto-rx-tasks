@@ -5,6 +5,7 @@
 // Success requires actual compiler --check AND guest execution. It is not
 // inferred from a host model, a zero-step Actions run, or a reference trace.
 import { spawnSync } from 'node:child_process';
+import { verify_runtime_negative } from './runtime_negative_verdict.mjs';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -65,23 +66,23 @@ const oracle = readFileSync(resolve(root, 'tests/task_single.out'), 'utf8').trim
 const runtimeNegativeCases = process.env.ORES_TEST_STAGE1 === '1' ? [
   {
     filename: 'double_field_take.ores',
-    reason: /already moved/
+    reason: /^oreslang: class field 'TaskCell\.producer' was already moved\s*$/m,
+    expectedStdout: 'RX_TASK_FIRST_FIELD_TAKE_COMMITTED\n'
   }
 ] : [];
 for (const negative of runtimeNegativeCases) {
   const file = resolve(root, 'tests/negative', negative.filename);
-  const result = spawnSync(java, [...prefix, file], {
-    encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
+  const outcome = verify_runtime_negative({
+    file,
+    expected: negative.reason,
+    expectedStdout: negative.expectedStdout,
+    invoke: args => spawnSync(java, [...prefix, ...args], {
+      encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024, shell: false
+    })
   });
-  if (result.error || result.signal || result.status === null) {
-    console.error('FAIL runtime negative guest did not finish',
-      negative.filename, result.error || result.signal);
-    process.exit(1);
-  }
-  const diagnostic = [result.stderr || '', result.stdout || ''].join('\n');
-  if (result.status === 0 || !negative.reason.test(diagnostic)) {
+  if (outcome.state !== 'PASS') {
     console.error('FAIL runtime negative guest', negative.filename,
-      'exit', result.status, 'diagnostic', diagnostic);
+      outcome.state, outcome.phase, outcome.diagnostic);
     process.exit(1);
   }
 }

@@ -45,12 +45,26 @@ test('stage-1 fixture is gated and possesses an exact expected-output oracle', (
     'true\n42\ntrue\nfalse\ntrue\nfalse\ntrue\n');
 });
 
-test('stage-1 runner includes a runtime-negative oracle for double Task field extraction', () => {
+test('stage-1 runner checks an exact guest-move runtime receipt', () => {
   const runner = readFileSync(resolve(root, 'scripts/test_guest.mjs'), 'utf8');
   const bad = readFileSync(resolve(root, 'tests/negative/double_field_take.ores'), 'utf8');
+  const gate = readFileSync(resolve(root, 'scripts/runtime_negative_verdict.mjs'), 'utf8');
   assert.match(runner, /filename: 'double_field_take.ores'/);
-  assert.match(runner, /reason: \/already moved\//);
-  assert.match(runner, /result.status === 0/);
+  assert.match(runner, /reason: \/\^oreslang: class field/);
+  assert.match(runner, /verify_runtime_negative\(\{/);
+  assert.match(runner, /outcome.state !== 'PASS'/);
+  assert.match(gate, /check.status !== 0/);
+  assert.match(gate, /execution.status !== 1/);
+  assert.match(gate, /actualStdout !== expectedStdout/);
+  assert.match(gate, /execution.stderr/);
   assert.equal((bad.match(/holder\.take_task\(\)/g) || []).length, 2);
   assert.match(bad, /rt take self\.producer/);
+});
+
+test('runtime-negative guest must print its unique first-take breadcrumb', () => {
+  const fixture = readFileSync(resolve(root, 'tests/negative/double_field_take.ores'), 'utf8');
+  const runner = readFileSync(resolve(root, 'scripts/test_guest.mjs'), 'utf8');
+  assert.match(fixture, /stdio\.println\("RX_TASK_FIRST_FIELD_TAKE_COMMITTED"\)/);
+  assert.match(runner, /expectedStdout: 'RX_TASK_FIRST_FIELD_TAKE_COMMITTED\\n'/);
+  assert.match(runner, /expectedStdout: negative\.expectedStdout/);
 });
