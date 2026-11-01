@@ -73,7 +73,9 @@ The verifier accepts a JSON object with
 receipt has backend id, its source Git repository/commit/tree, RX
 repository/commit, SHA-256 compiler binary and source-build receipt, the
 manifest-defined execution profile, a source-org GitHub job claim
-(`run_id`, `job_id`, `head_sha`, run URL, nonempty successful steps),
+(`run_id`, `job_id`, positive `runner_id`, nonempty `runner_name`,
+`conclusion: success`, `head_sha`, run URL, a real successful
+`RX Task guest conformance` step, and no failed/cancelled steps),
 and all five case receipts. Every case includes its actual fixture SHA-256,
 `execution: "oreslang-guest"` and the required compiler/guest exits.
 Positive cases must match the SHA-256 of checked-in expected output.
