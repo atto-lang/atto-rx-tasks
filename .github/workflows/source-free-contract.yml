@@ -16,6 +16,8 @@ jobs:
       - name: Show preinstalled Node.js
         run: node --version
       - name: Syntax-check guest runner
-        run: node --check scripts/test_guest.mjs
+        run: |
+          node --check scripts/test_guest.mjs
+          node --check scripts/verify_backend_evidence.mjs
       - name: Execute source-free reference protocol tests (NOT guest Oreslang execution)
         run: node --test tests/*.test.mjs
