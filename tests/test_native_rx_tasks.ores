@@ -1,0 +1,45 @@
+// Stage-0 Task Observable guest suite. NOT admitted without exact Task compiler.
+import * as rx_tasks from '../src/rx.ores';
+import class TaskObservable from '../src/rx.ores';
+import class TestCase, TestSuite, TestOptions, TestOutcome, RunSummary from "ores.std/testing";
+import fnc expect_true, run_suite, require_success from "ores.std/testing";
+
+fnc task_result_is_observed_once(): TestOutcome {
+  val Task<int> external = task { return 21; };
+  let TaskObservable<int> source = rx_tasks.from_task(external);
+  val Option<int> first = source.next();
+  val Option<int> second = source.next();
+  return expect_true(first.is_some() && first.unwrap() == 21 && second.is_none(),
+    "Task projection must emit only one result");
+}
+
+fnc cancel_before_demand_prevents_observation(): TestOutcome {
+  val Task<int> external = task { return 13; };
+  let TaskObservable<int> source = rx_tasks.from_task(external);
+  val bool first = source.cancel();
+  val bool repeated = source.cancel();
+  val Option<int> item = source.next();
+  return expect_true(first && !repeated && source.is_cancelled() && item.is_none(),
+    "pre-demand cancellation must be sticky and idempotent");
+}
+
+fnc finished_task_cannot_be_cancelled_again(): TestOutcome {
+  val Task<int> external = task { return 9; };
+  let TaskObservable<int> source = rx_tasks.from_task(external);
+  val Option<int> item = source.next();
+  val bool cancelled = source.cancel();
+  return expect_true(item.is_some() && item.unwrap() == 9 && !cancelled,
+    "observed completed task must not accept a late cancel");
+}
+
+pub routine main(): void {
+  val TestSuite suite = new TestSuite("rx-tasks-stage0", arr[
+    new TestCase("task_result_is_observed_once", task_result_is_observed_once, false, ""),
+    new TestCase("cancel_before_demand_prevents_observation", cancel_before_demand_prevents_observation, false, ""),
+    new TestCase("finished_task_cannot_be_cancelled_again", finished_task_cannot_be_cancelled_again, false, "")
+  ]);
+  val TestOptions options = new TestOptions("", false, true);
+  val RunSummary summary = run_suite(rt borrow suite, rt borrow options);
+  require_success(rt borrow summary);
+  return;
+}
