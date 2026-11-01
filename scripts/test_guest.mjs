@@ -86,7 +86,14 @@ for (const negative of runtimeNegativeCases) {
     process.exit(1);
   }
 }
-const cases = [{ source: src, fixture, oracle }];
+const cases = [
+  { source: src, fixture, oracle },
+  {
+    source: src,
+    fixture: resolve(root, 'tests/task_cancel_before.ores'),
+    oracle: readFileSync(resolve(root, 'tests/task_cancel_before.out'), 'utf8').trimEnd()
+  }
+];
 if (process.env.ORES_TEST_STAGE1 === '1') {
   cases.push({
     source: resolve(root, 'src/task_subscription.ores'),

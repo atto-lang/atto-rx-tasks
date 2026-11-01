@@ -38,12 +38,13 @@ define pub class TaskObservable<T> as
     return Some(value);
   }
 
-  // Mark local cancellation even while await is in flight. The suspended
-  // observer still requires runtime-safe waiter detachment (P0). Never
-  // invoke producer.cancel() or assume physical quiescence.
-  // Physical Task retirement is NOT implied by a successful cancel().
+  // Fail closed when demand/await is outstanding: no verified detached
+  // waiter token exists. Returning success here would claim cancellation
+  // authority we do not possess. Serialized-owner Stage 0 only; mutating
+  // suspended `mut self` still needs a real borrow-checker proof.
+  // Pre-demand cancel does NOT cancel or retire the external producer.
   pub cancel(mut self)(): bool {
-    if self.cancelled || self.finished; then
+    if self.cancelled || self.finished || self.demand_claimed; then
       return false;
     fi
     self.cancelled = true;
