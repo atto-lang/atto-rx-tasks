@@ -21,9 +21,10 @@ const make = (backend = manifest.backends[0]) => ({
   source_build_receipt_sha256: 'e'.repeat(64),
   execution_profile: backend.profile,
   github_job: {
-    run_id: 123456, job_id: 765432, head_sha: hex40,
+    run_id: 123456, job_id: 765432, runner_id: 17, runner_name: 'ubuntu-test',
+    conclusion: 'success', head_sha: hex40,
     url: 'https://github.com/ores-truffle-oreslang/rx-ores-tasks/actions/runs/123456',
-    steps: [{ name: 'Guest compiled and ran', executed: true, conclusion: 'success' }]
+    steps: [{ name: 'RX Task guest conformance', executed: true, conclusion: 'success' }]
   },
   cases: manifest.cases.map(c => ({
     id: c.id, kind: c.kind, execution: 'oreslang-guest', fixture_sha256: sha(c.source),
@@ -69,6 +70,17 @@ test('exact RX head and source provenance mandatory', () => {
 test('zero-step Actions receipt cannot become a pass', () => {
   const r = make(); r.github_job.steps = []; fail(r, 'nonzero-step');
   r.github_job.steps = [{ executed: false, conclusion: 'success' }]; fail(r, 'nonzero-step');
+});
+
+test('checkout-only, runnerless and failed jobs cannot spoof Task RX', () => {
+  const r = make();
+  r.github_job.steps = [{ name: 'Checkout', executed: true, conclusion: 'success' }];
+  fail(r, 'nonzero-step');
+  r.github_job.steps = [{ name: 'RX Task guest conformance', executed: true, conclusion: 'success' }];
+  r.github_job.conclusion = 'failure'; fail(r, 'nonzero-step');
+  r.github_job.conclusion = 'success'; r.github_job.runner_id = 0; fail(r, 'nonzero-step');
+  r.github_job.runner_id = 17; r.github_job.steps.push({ name: 'Guest failure', executed: true, conclusion: 'failure' });
+  fail(r, 'nonzero-step');
 });
 
 test('outside organization run URL and wrong execution SHA blocked', () => {
