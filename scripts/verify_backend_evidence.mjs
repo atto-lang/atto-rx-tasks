@@ -47,7 +47,11 @@ export function validateReceipts(report, expectedRxHead, scope = 'all') {
     const job = receipt.github_job;
     if (!job || typeof job !== 'object' || !posInt(job.run_id) || !posInt(job.job_id) ||
         !hex40.test(job.head_sha || '') || job.head_sha !== expectedRxHead ||
-        !Array.isArray(job.steps) || !job.steps.some(s => s && s.executed === true && s.conclusion === 'success') ||
+        !posInt(job.runner_id) || typeof job.runner_name !== 'string' || !job.runner_name.trim() ||
+        job.conclusion !== 'success' || !Array.isArray(job.steps) ||
+        !job.steps.some(s => s && s.name === 'RX Task guest conformance' &&
+          s.executed === true && s.conclusion === 'success') ||
+        job.steps.some(s => s && (s.conclusion === 'failure' || s.conclusion === 'cancelled')) ||
         !new RegExp('^https://github\\.com/ores-truffle-oreslang/rx-ores-tasks/actions/runs/' +
           (job?.run_id || '') + '(?:$|[/?#])').test(job?.url || '')) {
       add(where, 'missing exact-head, nonzero-step source-org GitHub job receipt');
