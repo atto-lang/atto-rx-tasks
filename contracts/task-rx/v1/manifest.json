@@ -1,0 +1,94 @@
+{
+  "schema": "oreslang-rx-task-parity/v1",
+  "purpose": "Guest Task RX parity admission; no source-free model or static check counts as guest execution",
+  "backends": [
+    {
+      "id": "java",
+      "repo": "ores-truffle-oreslang/oreslang-source.java",
+      "profile": "graalvm-jvm-and-native-image",
+      "status": "unverified",
+      "blocker": "Task<> source draft, await ownership and actor TaskScope guest acceptance not integrated"
+    },
+    {
+      "id": "llvm",
+      "repo": "ores-truffle-oreslang/oreslang-source.llvm",
+      "profile": "llvm-native-aot",
+      "status": "unverified",
+      "blocker": "Task<> frontend lowering and full structured observer lifecycle not proven; retain zero-GC hard-RT goals"
+    },
+    {
+      "id": "wasm",
+      "repo": "ores-truffle-oreslang/oreslang-source.wasm",
+      "profile": "wasm32-worker",
+      "status": "unsupported",
+      "blocker": "Current zero-import main()->i64 host explicitly excludes guest async, Task and actors"
+    },
+    {
+      "id": "cranelift",
+      "repo": "ores-truffle-oreslang/oreslang-source.cranelift",
+      "profile": "rust-cranelift-native-jit",
+      "status": "unsupported",
+      "blocker": "Current single-function scalar JIT excludes Task, classes, imports, control flow, and async; independent of Forge"
+    },
+    {
+      "id": "net",
+      "repo": "ores-truffle-oreslang/oreslang-source.net",
+      "profile": "dotnet-native-aot",
+      "status": "unsupported",
+      "blocker": "Shipping CIL/Native AOT compiler admits scalar subset, not Task, imports, ownership or await"
+    },
+    {
+      "id": "forge",
+      "repo": "ores-truffle-oreslang/oreslang-source.forge",
+      "profile": "forge-cpp-native",
+      "status": "unsupported",
+      "blocker": "Bootstrap C++ source compiler lacks guest async, Task, ownership and actors; distinct from Cranelift"
+    }
+  ],
+  "cases": [
+    {
+      "id": "stage0_one_shot",
+      "kind": "guest-positive",
+      "source": "tests/task_single.ores",
+      "oracle": "tests/task_single.out"
+    },
+    {
+      "id": "stage1_one_demand",
+      "kind": "guest-positive",
+      "source": "tests/task_subscription.ores",
+      "oracle": "tests/task_subscription.out"
+    },
+    {
+      "id": "immutable_task_field",
+      "kind": "guest-compile-reject",
+      "source": "tests/negative/immutable_task_field.ores",
+      "diagnostic_family": "immutable_field"
+    },
+    {
+      "id": "double_move_task",
+      "kind": "guest-compile-reject",
+      "source": "tests/negative/double_move_task.ores",
+      "diagnostic_family": "move_ownership"
+    },
+    {
+      "id": "double_field_take",
+      "kind": "guest-runtime-reject",
+      "source": "tests/negative/double_field_take.ores",
+      "stdout_marker": "RX_TASK_FIRST_FIELD_TAKE_COMMITTED",
+      "diagnostic_family": "moved_field"
+    }
+  ],
+  "exclusions": [
+    "host-only unit tests",
+    "source-free models",
+    "zero-step Actions jobs",
+    "compiler source syntax acceptance without guest execution",
+    "prototype reference interpreters",
+    "host stubbed Task/Future adapter",
+    "compiler binary without exact source/build binding"
+  ],
+  "references": [
+    "https://github.com/ores-truffle-oreslang/oreslang-platform-conformance/pull/192",
+    "https://github.com/ores-truffle-oreslang/rx-ores-tasks/issues/2"
+  ]
+}
