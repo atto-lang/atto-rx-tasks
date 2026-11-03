@@ -6,6 +6,7 @@
 // inferred from a host model, a zero-step Actions run, or a reference trace.
 import { spawnSync } from 'node:child_process';
 import { verify_runtime_negative } from './runtime_negative_verdict.mjs';
+import { verify_exact_stdout } from './guest_stdout_oracle.mjs';
 import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -58,7 +59,7 @@ const prefix = ['--enable-native-access=ALL-UNNAMED',
   'dev.oreslang.launcher.OresMain'];
 const src = resolve(root, 'src/rx.ores');
 const fixture = resolve(root, 'tests/task_single.ores');
-const oracle = readFileSync(resolve(root, 'tests/task_single.out'), 'utf8').trimEnd();
+const oracle = readFileSync(resolve(root, 'tests/task_single.out'));
 
 // A class-field alias may pass the current static checker; the evaluator
 // must consume the mutable slot before a second method invocation can read it.
@@ -91,14 +92,14 @@ const cases = [
   {
     source: src,
     fixture: resolve(root, 'tests/task_cancel_before.ores'),
-    oracle: readFileSync(resolve(root, 'tests/task_cancel_before.out'), 'utf8').trimEnd()
+    oracle: readFileSync(resolve(root, 'tests/task_cancel_before.out'))
   }
 ];
 if (process.env.ORES_TEST_STAGE1 === '1') {
   cases.push({
     source: resolve(root, 'src/task_subscription.ores'),
     fixture: resolve(root, 'tests/task_subscription.ores'),
-    oracle: readFileSync(resolve(root, 'tests/task_subscription.out'), 'utf8').trimEnd()
+    oracle: readFileSync(resolve(root, 'tests/task_subscription.out'))
   });
 }
 // Negative tests run only on the explicit stage-1 Task-enabled compiler path.
@@ -132,16 +133,20 @@ for (const negative of negativeCases) {
 for (const suite of cases) {
   for (const args of [['--check', suite.source], ['--check', suite.fixture], [suite.fixture]]) {
   const result = spawnSync(java, [...prefix, ...args], {
-    encoding: 'utf8', timeout: 30000, maxBuffer: 1024 * 1024,
+    encoding: null, timeout: 30000, maxBuffer: 1024 * 1024,
     shell: false
   });
-  if (result.error || result.status !== 0 || /: error:/.test(result.stderr || '')) {
-    console.error('FAIL guest', args, result.error || result.stderr || result.stdout);
+  const stderr = (result.stderr || Buffer.alloc(0)).toString('utf8');
+  if (result.error || result.signal || result.status !== 0 || /: error:/.test(stderr)) {
+    console.error('FAIL guest', args, result.error || stderr ||
+      (result.stdout || Buffer.alloc(0)).toString('utf8'));
     process.exit(1);
   }
-  if (args.length === 1 && (result.stdout || '').trimEnd() !== suite.oracle) {
-    console.error('FAIL guest expected', JSON.stringify(suite.oracle),
-      'actual', JSON.stringify((result.stdout || '').trimEnd()));
+  const stdout = result.stdout || Buffer.alloc(0);
+  if (args.length === 1 && !verify_exact_stdout(stdout, suite.oracle)) {
+    console.error('FAIL guest byte oracle', args,
+      'expected_bytes', suite.oracle.length, suite.oracle.toString('hex'),
+      'actual_bytes', stdout.length, stdout.toString('hex'));
     process.exit(1);
   }
   }
