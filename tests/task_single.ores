@@ -17,5 +17,8 @@ pub async fnc main(): void {
   stdio.println(detached.cancel());
   stdio.println(detached.cancel());
   stdio.println(detached.next().is_none());
+  // Acceptance candidates: terminal reads must never resurrect retired tasks.
+  if source.next().is_some() then panic("completed task emitted after terminal"); fi
+  if detached.next().is_some() then panic("cancelled task emitted after terminal"); fi
   return;
 }
