@@ -129,6 +129,41 @@ test('backend mismatch and profile substitution fail closed', () => {
   r.execution_profile = 'fake-future-adapter'; fail(r, 'execution profile');
 });
 
+test('unsafe, fractional and Boolean GitHub identities cannot stand in for executed steps', () => {
+  for (const [key, value] of [
+    ['run_id', 0], ['run_id', Number.MAX_SAFE_INTEGER + 1],
+    ['job_id', 1.5], ['runner_id', true], ['runner_id', Number.NaN],
+    ['runner_name', ' \t  '],
+  ]) {
+    const receipt = make();
+    receipt.github_job[key] = value;
+    fail(receipt, 'nonzero-step');
+  }
+});
+
+test('run URLs must bind the exact source-org run ID without path or host spoofing', () => {
+  const expected = 'https://github.com/ores-truffle-oreslang/rx-ores-tasks/actions/runs/';
+  for (const url of [
+    expected + '1234567',
+    expected + '123456evil',
+    'https://github.com/ores-truffle-oreslang/rx-ores-tasks.evil/actions/runs/123456',
+    'https://github.com.evil/ores-truffle-oreslang/rx-ores-tasks/actions/runs/123456',
+  ]) {
+    const receipt = make();
+    receipt.github_job.url = url;
+    fail(receipt, 'nonzero-step');
+  }
+});
+
+test('a syntactically valid but foreign fixture digest cannot certify guest execution', () => {
+  const receipt = make();
+  receipt.cases[0].fixture_sha256 = '0'.repeat(64);
+  fail(receipt, 'fixture bytes SHA-256 mismatch');
+  receipt.cases[0].fixture_sha256 = sha(manifest.cases[0].source);
+  receipt.compiler_artifact_sha256 = 'F'.repeat(64);
+  fail(receipt, 'compiler binary and source-build receipt');
+});
+
 test('unknown target and malformed receipt do not silently pass', () => {
   assert.ok(validateReceipts({ schema: manifest.schema, receipts: [] }, hex40, 'unknown')
     .some(e => e.includes('unknown backend')));
