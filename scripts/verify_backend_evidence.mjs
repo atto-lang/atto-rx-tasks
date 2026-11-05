@@ -49,6 +49,7 @@ export function validateReceipts(report, expectedRxHead, scope = 'all') {
         !hex40.test(job.head_sha || '') || job.head_sha !== expectedRxHead ||
         !posInt(job.runner_id) || typeof job.runner_name !== 'string' || !job.runner_name.trim() ||
         job.conclusion !== 'success' || !Array.isArray(job.steps) ||
+        job.steps.filter(s => s && s.name === 'RX Task guest conformance').length !== 1 ||
         !job.steps.some(s => s && s.name === 'RX Task guest conformance' &&
           s.executed === true && s.conclusion === 'success') ||
         job.steps.some(s => s && (s.conclusion === 'failure' || s.conclusion === 'cancelled')) ||
