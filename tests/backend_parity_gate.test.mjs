@@ -169,3 +169,17 @@ test('unknown target and malformed receipt do not silently pass', () => {
     .some(e => e.includes('unknown backend')));
   assert.ok(validateReceipts(null, hex40).length > 0);
 });
+
+test('duplicate guest conformance step names cannot forge unique execution proof', () => {
+  const receipt = make();
+  receipt.github_job.steps.push({
+    name: 'RX Task guest conformance', executed: true, conclusion: 'success'
+  });
+  fail(receipt, 'nonzero-step');
+
+  // A skipped duplicate cannot be hidden behind a successful same-name step.
+  receipt.github_job.steps[0] = {
+    name: 'RX Task guest conformance', executed: false, conclusion: 'skipped'
+  };
+  fail(receipt, 'nonzero-step');
+});
