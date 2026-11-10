@@ -32,19 +32,19 @@ scope tasks as s {
 } // scope exits only after all owned children have physically retired
 ```
 
-Desired typed operators, with independently testable semantics:
+Desired typed operators (canonical guest APIs use snake_case), with independently testable semantics. Already-started Task observation and lazy TaskStep scope admission must remain distinct:
 
 | Candidate | Semantics | Cancellation ownership |
 | --- | --- | --- |
 | `Task.map(task, f)` | Transform one successful result; preserve typed failure/cancellation | Borrowed observation never cancels `task` |
-| `Task.andThen(task, f)` | Explicit one-to-one bind to another `Task<U>`; no implicit Future/Option flattening | Owned continuation belongs to scope |
+| `Task.and_then(task, f)` | Explicit one-to-one bind to another `Task<U>`; no implicit Future/Option flattening | Owned continuation belongs to scope |
 | `Task.zip(a,b)` / `all(list)` | Join in deterministic input order; bounded fan-in | Owned members only, physically drain on failure |
-| `Task.allSettled(list)` | Preserve Success / Failed / Cancelled without swallowing panic | Does not fabricate cancellation authority |
+| `Task.all_settled(list)` | Preserve Success / Failed / Cancelled without swallowing panic | Does not fabricate cancellation authority |
 | `Task.race(list)` | First terminal event; deterministic arbitration rule for exact ties | Cancel owned losers; detach borrowed observation only |
-| `Task.firstSuccess(list)` | First Success; otherwise aggregate failures/cancellations | Same owned/borrowed boundary |
+| `Task.first_success(list)` | First Success; otherwise aggregate failures/cancellations | Same owned/borrowed boundary |
 | `Task.timeout(task, deadline)` | Deadline requests cancellation; timeout != child quiescence | Owned Task may be cancelled, external Task only detached |
 | `Task.retry(factory, policy)` | Construct a **fresh** attempt each time, bounded attempts/backoff | Never rerun an already hot/consumed Task |
-| `scope.spawnBlocking(hostFn)` | Separately admitted blocking host operation | Explicit quota/isolation; never block an actor carrier |
+| `scope.spawn_blocking(hostFn)` | Separately admitted blocking host operation | Explicit quota/isolation; never block an actor carrier |
 
 `race`/`firstSuccess` must use one immutable candidate snapshot for both
 winner selection **and loser cancellation**. A caller-mutated list may not add
@@ -64,7 +64,7 @@ Use an upper bound (e.g. 65,536) and reject duplicate candidates.
    actor locks. An ordinary mutex guard should not cross `await` unless its
    suspension-safe ownership contract explicitly allows it.
 4. Async cleanup is awaited by a **non-cancellable retirement barrier**.
-   Public result notification can occur earlier; `getDone()` cannot succeed
+   Public result notification can occur earlier; `get_done()` cannot succeed
    until physical carrier unwind, child quiescence, waiter unlinking, async
    cleanup and borrowed-region release are all verified. Cleanup failure
    poisons DONE and retains memory/permits fail-closed.
@@ -111,7 +111,7 @@ before any change can be attributed to it.
   owner and observer cancellation capabilities.
 - `Future<T> -> Task<T>`: requires a fresh owner/scope and admitted execution
   policy; observing a Future must not clone or rerun its producer.
-- `Observable<T>.mapAsync(f, limit)` or equivalent: child tasks belong to
+- `Observable<T>.map_async(f, limit)` or equivalent: child tasks belong to
   subscription scope; enforce bounded in-flight children, demand credits,
   deterministic terminal arbitration, and await physical child retirement on
   cancellation. Actor ownership, borrow lifetimes and Send/Sync proofs apply.
