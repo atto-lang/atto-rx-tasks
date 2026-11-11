@@ -1,0 +1,6 @@
+// Smallest missing per-Task physical-retirement observation.
+pub routine main(): void {
+  let Task<int> child = task { return 1; };
+  await child.get_done();
+  return;
+}
