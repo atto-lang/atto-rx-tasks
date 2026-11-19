@@ -26,6 +26,30 @@ This describes intended scope, not a verified feature matrix. Consult the source
 - [Language specification](https://github.com/atto-lang/atto-spec)
 - [Cross-platform conformance](https://github.com/atto-lang/atto-platform-conformance)
 
+## Naming migration and language authority
+
+This repository is maintained at [atto-lang/atto-rx-tasks](https://github.com/atto-lang/atto-rx-tasks); use `https://github.com/atto-lang/atto-rx-tasks.git` for Git remotes and canonical `.atto` source examples. The normative language contract is [atto-spec](https://github.com/atto-lang/atto-spec), with executable guest evidence tracked by [atto-platform-conformance](https://github.com/atto-lang/atto-platform-conformance). Follow current ownership, borrowing, effects, actor, and syntax rules there; do not infer implemented features from a README or unexecuted CI.
+
+## Repository ownership and contribution routing
+
+**Belongs here:** Reactive async task composition, cancellation chains, task-local propagation and Result/Future completion semantics.
+
+**Belongs elsewhere:** Channels/observables in atto-rx-channels; callbacks in atto-rx-callbacks; core structured concurrency semantics in atto-spec.
+
+**Security and portability boundary:** Do not auto-flatten nested Future/Option; test cancellation, ownership, nested failure, resource exhaustion and no stuck carrier threads.
+
+AttoLang is the canonical project name; new source, examples and documentation use `.atto` and the `atto-lang` repository organization. This README defines scope, not feature readiness.
+
+**Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
+
+## Canonical AttoLang migration status
+
+The source-free Node model and the pinned Java six-order `.atto` batch are
+separate from full Task RX support. Imported legacy `.ores` adapters require
+an audited canonical `.atto` port, and supporting CI should migrate toward
+Rust tests. Cancellation, `get_done()`, shared-slot capture and scoped borrow
+semantics remain blocked; this PR must not claim a complete native Task engine.
+
 ## Executed Java milestone and remaining blockers
 
 The source incubator history and PR #13 contracts are reconciled here with the
