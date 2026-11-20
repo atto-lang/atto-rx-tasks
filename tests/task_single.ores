@@ -1,0 +1,24 @@
+import * as rx_tasks from '../src/rx.ores';
+import class TaskObservable from '../src/rx.ores';
+
+// Acceptance candidate only. Not wired into stable compiler.lock or CI.
+// Requires the exact Task<T> source branch, guest Task transfer validation,
+// and correct structured physical-retirement fences.
+pub async fnc main(): void {
+  val Task<int> producer = task { return 42; };
+  let TaskObservable<int> source = rx_tasks.from_task(producer);
+
+  stdio.println(source.next().unwrap());
+  stdio.println(source.next().is_none());
+  stdio.println(source.cancel());
+
+  val Task<int> independent = task { return 99; };
+  let TaskObservable<int> detached = rx_tasks.from_task(independent);
+  stdio.println(detached.cancel());
+  stdio.println(detached.cancel());
+  stdio.println(detached.next().is_none());
+  // Acceptance candidates: terminal reads must never resurrect retired tasks.
+  if source.next().is_some() then panic("completed task emitted after terminal"); fi
+  if detached.next().is_some() then panic("cancelled task emitted after terminal"); fi
+  return;
+}
