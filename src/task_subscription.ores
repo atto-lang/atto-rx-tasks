@@ -1,0 +1,66 @@
+// Experimental Task-native single-demand adapter. NOT production-ready.
+// Independent file: src/rx.ores is unchanged.
+// Requires compiler-validated Task<T> + rt take support.
+// A Task observation creates one observer child, not another producer.
+// The subscription mutable self never escapes into the observer child.
+
+define pub class TaskStreamEvent<T> as
+  val String kind;
+  val Option<T> value;
+
+  constructor(String kind, Option<T> value) {
+    self.kind = kind;
+    self.value = value;
+  }
+
+  pub is_next(): bool { return self.kind == "next"; }
+  pub is_complete(): bool { return self.kind == "complete"; }
+  pub is_cancelled(): bool { return self.kind == "cancelled"; }
+end
+
+define pub class TaskSubscription<T> as
+  // A moved-from, mutable owner slot is required by the exact ownership checker.
+  // This is a single-owner adapter: the compiler has NOT yet proved a
+  // second class-field extraction impossible across different call sites.
+  let Task<T> producer;
+  let bool demand_claimed = false;
+  let bool cancelled = false;
+
+  constructor(Task<T> producer) {
+    self.producer = producer;
+  }
+
+  // One admitted observer Task, no prefetch. None denies duplicate demand.
+  // Must join the returned Task in the owning TaskScope.
+  // Runtime cancellation/detach after admission is NOT supported yet.
+  pub next_task(mut self)(): Option<Task<TaskStreamEvent<T>>> {
+    if self.cancelled || self.demand_claimed; then
+      return None;
+    fi
+    self.demand_claimed = true;
+    val Task<T> one_producer = rt take self.producer;
+    val Task<TaskStreamEvent<T>> child = task {
+      val T item = await one_producer;
+      return new TaskStreamEvent<T>("next", Some(item));
+    };
+    return Some(child);
+  }
+
+  // Refuse post-demand cancellation: no false detachment promise.
+  // In particular, never cancel an independently owned producer Task.
+  pub cancel(mut self)(): bool {
+    if self.cancelled || self.demand_claimed; then
+      return false;
+    fi
+    self.cancelled = true;
+    return true;
+  }
+
+  pub is_cancelled(): bool { return self.cancelled; }
+  pub has_admitted_demand(): bool { return self.demand_claimed; }
+end
+
+// Transfers the one hot Task handle; no implicit multicast or clone.
+pub fnc from_task<T>(Task<T> producer): TaskSubscription<T> {
+  return new TaskSubscription<T>(producer);
+}
