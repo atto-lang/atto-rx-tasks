@@ -1,0 +1,8 @@
+// Failure must escape the scope; resource reuse after it must be unreachable.
+pub routine main(): void {
+  task scope {
+    let Task<int> child = task { rt fail "order-rejected"; return 0; };
+  }
+  stdio.println("UNSAFE_REUSE");
+  return;
+}

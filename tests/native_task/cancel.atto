@@ -1,0 +1,6 @@
+// Smallest missing owned Task cancellation API. Must not be replaced by Future.
+pub routine main(): void {
+  let Task<int> child = task { return 1; };
+  child.cancel();
+  return;
+}
