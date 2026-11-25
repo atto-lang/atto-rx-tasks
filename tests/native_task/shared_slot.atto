@@ -1,0 +1,27 @@
+// A normal scope drains async guest cleanup before the slot can be reused.
+define class Slot as
+  pub let int retired = 0;
+end
+suspends fnc retire_slot(SharedMutex<Slot> slot): void {
+  rt cooperate;
+  block {
+    val guard = slot.lock();
+    guard.retired = 1;
+  }
+  stdio.println("retired");
+  return;
+}
+pub routine main(): void {
+  val slot = SharedMutex.new(new Slot());
+  task scope {
+    let Task<int> child = task { defer retire_slot(slot); return 7; };
+    stdio.println(await child);
+  }
+  block {
+    val guard = slot.lock();
+    if guard.retired != 1 then rt fail "reuse-before-retirement"; fi
+    guard.retired = 2;
+  }
+  stdio.println("reused");
+  return;
+}

@@ -1,0 +1,11 @@
+{
+  "repository": "ores-truffle-oreslang/oreslang-source.java",
+  "pull_request": 2802,
+  "base_pull_request": 1468,
+  "commit": "8b9f566813cdc1042cce4306b59d7123e5d4623d",
+  "tree": "0021cc8b040ec01ccc9d174efdbc739fc5549770",
+  "java_version": "25.0.4",
+  "truffle_version": "25.3.4.1",
+  "execution": "JVM Truffle fallback interpreter; not native-image or JIT certification",
+  "status": "partial Task admission; cancellation and individual retirement unsupported"
+}

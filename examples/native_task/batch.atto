@@ -1,0 +1,22 @@
+// Six deterministic orders, at most two owned native Task<int> children per scope.
+// Results are collected in input order. Scope exit is the resource-reuse fence.
+pub routine main(): void {
+  let mut int total = 0;
+  let mut int next = 1;
+  while next <= 6 {
+    val int left_id = next;
+    val int right_id = next + 1;
+    task scope {
+      let Task<int> left = task { return left_id * 10; };
+      let Task<int> right = task { return right_id * 10; };
+      val int left_result = await left;
+      val int right_result = await right;
+      stdio.println(left_result);
+      stdio.println(right_result);
+      total = total + left_result + right_result;
+    }
+    next = next + 2;
+  }
+  stdio.println(total);
+  return;
+}
