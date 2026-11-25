@@ -1,43 +1,51 @@
-# rx-ores-tasks
+> **AI agent instructions (organization-wide):** Before working on code, issues, or pull requests, read and follow the [organization `AGENTS.md`](https://github.com/atto-lang/.github/blob/main/AGENTS.md), including its **merge-first stealth-development policy**. Honor any repository-local `AGENTS.md`, explicit holds, and GitHub-enforced rules.
 
-Experimental **native Task-based reactive streams for Oreslang**.
+# atto-rx-tasks
 
-This implementation is intentionally independent of:
-- [rx-ores](https://github.com/ores-truffle-oreslang/rx-ores) — pull/Future and `await`
-- [rx-oreslang-channels](https://github.com/ores-truffle-oreslang/rx-oreslang-channels) — Channel/select coordination
-- [rx-ores-callbacks](https://github.com/ores-truffle-oreslang/rx-ores-callbacks) — synchronous callback push
+Reactive task composition and asynchronous execution utilities for AttoLang.
 
-**Status: incubating.** No production-ready RX Task semantics or cross-backend execution has been established. Draft source and source-free contract tests will be proposed through a pull request before any Task-enabled compiler is pinned.
+## Naming migration and language authority
 
-## Target contracts
+This repository is maintained at [atto-lang/atto-rx-tasks](https://github.com/atto-lang/atto-rx-tasks); use `https://github.com/atto-lang/atto-rx-tasks.git` for Git remotes and canonical `.atto` source examples. The normative language contract is [atto-spec](https://github.com/atto-lang/atto-spec), with executable guest evidence tracked by [atto-platform-conformance](https://github.com/atto-lang/atto-platform-conformance). Follow current ownership, borrowing, effects, actor, and syntax rules there; do not infer implemented features from a README or unexecuted CI.
 
-- Native, structured `Task<T>` execution; do not require a Channel or convert via Future as the default execution engine.
-- Subscription demand and `TaskScope` child admission bounded at every step.
-- Four distinct outcomes: NEXT, COMPLETE, FAILED, CANCELLED; terminal arbitration and exactly-once cleanup.
-- Cancel a subscription's own waiting/children, never an independently owned producer through an observer handle.
-- Actor region/arena and borrow lifetime release only after producer **physical retirement**, not logical Task completion.
-- Preserve Send/Sync and affine ownership across Tasks and actor boundaries.
-- Verify exact guest-language compiler/runtime execution separately from source-only models and workflow-runner admission.
+## Purpose
 
-## Six-toolchain Task RX portability gate
+Task composition, cancellation semantics, asynchronous results, and lifecycle guarantees.
 
-The target is **Java/GraalVM, LLVM, WASM, Cranelift, .NET Native AOT, and independent Forge**. None is currently certified for native Task RX guest execution. See [the audited per-backend contract and exact-source verification sequence](docs/BACKEND_TASK_RX_PORTABILITY.md) and the source-free receipt/schema checks at `contracts/task-rx/v1/manifest.json` and `tests/backend_parity_gate.test.mjs`. Cranelift does **not** share Forge's runtime. A passing Node model or a structurally valid self-asserted CI receipt is **not** executable RX parity.
+## API and contract expectations
 
-## Origin and tracking
+- Expose general-purpose interfaces that are usable without an Atto commercial account.
+- Document data/ownership semantics, error behavior, and supported runtimes.
+- Keep protocol and serialization details portable across relevant AttoLang backends.
 
-- Initial experimental source: [rx-ores PR #22](https://github.com/ores-truffle-oreslang/rx-ores/pull/22), in `incubator/rx-ores-tasks/`.
-- Task RX design: [rx-ores issue #21](https://github.com/ores-truffle-oreslang/rx-ores/issues/21).
-- Required compiler/runtime contracts: [Task implementation #1468](https://github.com/ores-truffle-oreslang/oreslang-source.java/pull/1468), [Task retirement #2070](https://github.com/ores-truffle-oreslang/oreslang-source.java/pull/2070), [Task/Future adapter issue #2150](https://github.com/ores-truffle-oreslang/oreslang-source.java/issues/2150), and [conformance #192](https://github.com/ores-truffle-oreslang/oreslang-platform-conformance/pull/192).
+## Development and testing
 
-Do not treat a passing source-free model test or a GitHub Actions job with zero executed steps as compiler/runtime evidence.
+Use checked-in implementation and CI for actual commands. Add behavior-focused tests, including negative cases and lifecycle edge cases; distinguish local unit tests from executed multi-backend conformance.
 
-## Repository ownership and migration (2026-11-08)
+## Project status
 
-**AttoLang** is the public language, formerly Oreslang. The repository remains `ores-truffle-oreslang/rx-ores-tasks` in the legacy org until approved cutover. Preserve supported `.ores` sources, old import paths and package/CLI names; don't infer backend completeness from a README.
+This describes intended scope, not a verified feature matrix. Consult the source tree and exact-commit CI results for implementation status.
 
-- **Belongs here:** reactive task composition adapters, cancellation and structured-concurrency semantics.
-- **Excluded:** native scheduler or cloud worker administration.
-- **Organization split:** [atto-lang](https://github.com/atto-lang) owns portable core/std, compilers, language libraries, test harnesses and demos; [atto-co](https://github.com/atto-co) independently owns cloud hosting, deployment, identity, billing and managed services. Existing `atto-*` repos are not automatically migrated copies or equivalent codebases.
-- **Proposed first transfer (not executed):** retain original name, repo ID and Git history in `atto-lang/rx-ores-tasks` via approved GitHub ownership transfer. No direct source-org → `atto-co` moves are authorized currently; future product carve-outs need separate signoffs.
+## Ecosystem
 
-**Maintainer safety procedure:** coordinate exact source head, owners and rollback in [issue #26](https://github.com/ores-truffle-oreslang/.github/issues/26), then follow private [runbook draft #25](https://github.com/ores-truffle-oreslang/.github/pull/25). Obtain source/target admin and independent security approval; inventory exact SHA/tree, numeric ID, target branch protections/rulesets, access, open PRs, releases/tags, packages, consumers, Actions/runners, secrets, GitHub Apps, webhooks and Pages. Don't clone/mirror private code as transfer workaround. After transfer verify ID/tree/history/controls, update links and rerun exact-head CI; **`steps=[]`/`null` is `NOT_EXECUTED`**, and host-only/source-free checks are not native guest/compiler evidence.
+- [AttoLang](https://github.com/atto-lang)
+- [Language specification](https://github.com/atto-lang/atto-spec)
+- [Cross-platform conformance](https://github.com/atto-lang/atto-platform-conformance)
+
+## Repository ownership and contribution routing
+
+**Belongs here:** Reactive async task composition, cancellation chains, task-local propagation and Result/Future completion semantics.
+
+**Belongs elsewhere:** Channels/observables in atto-rx-channels; callbacks in atto-rx-callbacks; core structured concurrency semantics in atto-spec.
+
+**Security and portability boundary:** Do not auto-flatten nested Future/Option; test cancellation, ownership, nested failure, resource exhaustion and no stuck carrier threads.
+
+AttoLang is the canonical project name; new source, examples and documentation use `.atto` and the `atto-lang` repository organization. This README defines scope, not feature readiness.
+
+**Acceptance:** name exact source SHA/tree, runtime/toolchain, positive and negative checks and execution receipt before claiming support. Host-only tests and empty CI steps do not prove guest execution.
+
+## Legacy migration provenance and gates
+
+The original `ores-truffle-oreslang/rx-ores-tasks` repository is archived; this AttoLang repository has a separate numeric GitHub identity. Historical `.ores` files, imports, package names and CLI identifiers are compatibility history, not evidence of current `.atto` execution. Reactive task composition adapters, cancellation and structured concurrency belong here; native scheduler and cloud worker administration do not.
+
+[atto-lang](https://github.com/atto-lang) owns language libraries, compilers, tooling, tests and examples; [atto-co](https://github.com/atto-co) owns hosted deployment, tenant infrastructure, identity and billing. A future original-ID transfer or product carve-out requires separate source/target owner and independent security approval. Inventory exact SHA/tree, numeric ID, visibility, permissions, protections, PRs, releases, packages, dependencies, runners, secrets, applications, webhooks, Pages and rollback owner; verify preservation and rerun exact-head tests after an actual transfer. Never mirror private source without authorization. Zero-step jobs are NOT_EXECUTED; host-only checks do not establish native guest/compiler execution.
